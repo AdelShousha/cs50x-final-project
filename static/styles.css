@@ -9,9 +9,9 @@ nav .navbar-brand .blue
 {
     color: #537fbe;
 }
-nav .navbar-brand .red
+nav .navbar-brand .darkorchid
 {
-    color: #ea433b;
+    color: #9932CC;
 }
 nav .navbar-brand .yellow
 {
@@ -20,4 +20,153 @@ nav .navbar-brand .yellow
 nav .navbar-brand .green
 {
     color: #2e944b;
+}
+
+.form-control {
+    display: inline;
+}
+
+.table>:not(caption)>*>* {
+    box-shadow: none;
+}
+
+.text-end {
+    text-align: center!important;
+}
+
+.custab{
+    border: 1px solid #ccc;
+    padding: 5px;
+    margin: 2% 0;
+    box-shadow: 3px 3px 2px #ccc;
+    transition: 0.5s;
+}
+
+.custab:hover{
+    box-shadow: 3px 3px 0px transparent;
+    transition: 0.5s;
+}
+
+.btn-danger {
+    color: #fff;
+    background-color: #d83b1f;
+    border-color: #dc3545;
+}
+
+.btn-info {
+    color: #000;
+    background-color: #0dcaf0;
+    border-color: #0dcaf0;
+}
+
+.btn-glyphicon {
+    padding:8px;
+    background:#ffffff;
+    margin-right:4px;
+}
+.icon-btn {
+    padding: 1px 15px 3px 2px;
+    border-radius:50px;
+}
+/* modal css*/
+* {box-sizing: border-box}
+
+/* Set a style for all buttons */
+button {
+  background-color: #04AA6D;
+  color: white;
+  padding: 14px 20px;
+  margin: 8px 0;
+  border: none;
+  cursor: pointer;
+  opacity: 0.9;
+}
+
+button:hover {
+  opacity:1;
+}
+
+/* Float cancel and delete buttons and add an equal width */
+.cancelbtn, .deletebtn {
+  float: left;
+  width: 50%;
+}
+
+/* Add a color to the cancel button */
+.cancelbtn {
+  background-color: #ccc;
+  color: black;
+}
+
+/* Add a color to the delete button */
+.deletebtn {
+  background-color: #f44336;
+}
+
+/* Add padding and center-align text to the container */
+.container {
+  padding: 16px;
+  text-align: center;
+}
+
+/* The Modal (background) */
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: #474e5d;
+  padding-top: 50px;
+}
+
+/* Modal Content/Box */
+.modal-content {
+  background-color: #fefefe;
+  margin: 5% auto 15% auto; /* 5% from the top, 15% from the bottom and centered */
+  border: 1px solid #888;
+  width: 80%; /* Could be more or less, depending on screen size */
+}
+
+/* Style the horizontal ruler */
+hr {
+  border: 1px solid #f1f1f1;
+  margin-bottom: 25px;
+}
+
+/* The Modal Close Button (x) */
+.close {
+  position: absolute;
+  right: 35px;
+  top: 15px;
+  font-size: 40px;
+  font-weight: bold;
+  color: #f1f1f1;
+}
+
+.close:hover,
+.close:focus {
+  color: #d3188b;
+  cursor: pointer;
+}
+
+/* Clear floats */
+.clearfix::after {
+  content: "";
+  clear: both;
+  display: table;
+}
+
+/* Change styles for cancel button and delete button on extra small screens */
+@media screen and (max-width: 300px) {
+  .cancelbtn, .deletebtn {
+    width: 100%;
+  }
+}
+
+.modal-body{
+    font-size: 20px;
 }

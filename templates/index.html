@@ -1,46 +1,176 @@
 {% extends "layout.html" %}
 
 {% block title %}
-    Log In
+Home
 {% endblock %}
 
 {% block main %}
 <div class="container text-center">
+    <div class="custyle">
+        <table class="table table-striped custab">
+            <thead>
 
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th class="text-start">Symbol</th>
-                <th class="text-start">Name</th>
-                <th class="text-end">Shares</th>
-                <th class="text-end">Price</th>
-                <th class="text-end">TOTAL</th>
-            </tr>
-        </thead>
-       <tbody>
-
-            {% for stock in stocks %}
                 <tr>
-                    <td class="text-start">{{ stock.stock_symbol }}</td>
-                    <td class="text-start">{{ stock.stock_name }}</td>
-                    <td class="text-end">{{ stock.share }}</td>
-                    <td class="text-end">{{ stock.current_price | usd }}</td>
-                    <td class="text-end">{{ stock.total_price | usd }}</td>
+                    <th class="text-end">Total GPA</th>
+                    <th class="text-end">Total Percentage</th>
+                    <th class="text-end">Total Credit Hours</th>
                 </tr>
-            {% endfor %}
-
-        </tbody>
-        <tfoot>
+            </thead>
             <tr>
-                <td class="border-0 fw-bold text-end" colspan="4">Cash</td>
-                <td class="border-0 text-end">{{ user_cash | usd }}</td>
+                <td class="text-end">{{ total_gpa }}</td>
+                <td class="text-end">{{ total_percent }}</td>
+                {% if total_hours == 1000 %}
+                <td class="text-end">0</td>
+                {% else %}
+                <td class="text-end">{{ total_hours }}</td>
+                {% endif %}
             </tr>
-            <tr>
-                <td class="border-0 fw-bold text-end" colspan="4">TOTAL</td>
-                <td class="border-0 w-bold text-end">{{ grand_total| usd }}</td>
-            </tr>
-        </tfoot>
-    </table>
-
+        </table>
+    </div>
 </div>
+
+<div class="container text-center">
+    <div class="custyle">
+        <table class="table table-striped custab">
+            <thead>
+
+                <tr>
+                    <th class="text-end">Subject</th>
+                    <th class="text-end">Credit Hours</th>
+                    <th class="text-end">Score</th>
+                    <th class="text-end">Grade</th>
+                    <th class="text-end">GPA</th>
+                    <th class="text-center">Action</th>
+                </tr>
+            </thead>
+
+            {% for subject in subjects %}
+            <tr>
+                <td class="text-end">{{ subject.name }}</td>
+                <td class="text-end">{{ subject.hours }}</td>
+                <td class="text-end">{{ subject.percent }}</td>
+                <td class="text-end">{{ subject.grade }}</td>
+                <td class="text-end">{{ subject.gpa }}</td>
+                <td class="text-center"><a class="btn icon-btn btn-success" onclick="document.getElementById('id02').style.display='block'"><span class="glyphicon btn-glyphicon glyphicon-pencil img-circle text-success"></span>Edit</a>
+                                        <a class="btn icon-btn btn-danger" onclick="document.getElementById('id01').style.display='block'" ><span class="glyphicon btn-glyphicon glyphicon-trash img-circle text-danger"></span>Delete</a>
+                </td>
+            </tr>
+    </div>
+    
+    <!-- modal for edit button -->
+    <div id="id02" class="modal">
+        <span onclick="document.getElementById('id02').style.display='none'" class="close" title="Close Modal">×</span>
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <form action="/modal" method="post">
+                    <div class="modal-header">
+                        <div class="modal-title">
+                            <h1>Edit Subject</h1>
+                        </div>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <input autocomplete="off" autofocus class="form-control mx-auto w-auto"  name="name" placeholder="Subject Name" type="text">
+                            <input autocomplete="off" autofocus class="form-control mx-auto w-auto"  name="hours" placeholder="Credit Hours" type="number" min="1" max="6">
+                            <input autocomplete="off" autofocus class="form-control mx-auto w-auto"  id="percent" name="percent" placeholder="Score" type="number" min="1" max="100">
+                            <input autocomplete="off" autofocus class="form-control mx-auto w-auto"  readonly id="gpa" name="gpa" placeholder="gpa" type="number" step="0.01" min="0" max="4" >
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="clearfix">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal"
+                                onclick="document.getElementById('id02').style.display='none'"
+                                class="cancelbtn">Cancel</button>
+                            <button type="submit" name="edit_id" value={{ subject.id }} type="button"
+                                class="btn btn-primary" onclick="document.getElementById('id02').style.display='none'"
+                                class="deletebtn">Edit</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let input = document.querySelector('#percent');
+        input.addEventListener('input', async function() {
+            let shows = input.value;
+            if(input.value > 100){
+                shows = 0.0
+            }
+            else if (input.value >= 93){
+                shows = 4.0
+            }
+            else if(input.value >= 89){
+                shows = 3.7
+            }
+            else if(input.value >= 84){
+                shows = 3.3
+            }
+            else if(input.value >= 80){
+                shows = 3.0
+            }
+            else if(input.value >= 76){
+                shows = 2.7
+            }
+            else if(input.value >= 73){
+                shows = 2.3
+            }
+            else if(input.value >= 70){
+                shows = 2.0
+            }
+            else if(input.value >= 67){
+                shows = 1.7
+            }
+            else if(input.value >= 64){
+                shows = 1.3
+            }
+            else if(input.value >= 60){
+                shows = 1.0
+            }
+            else{
+                shows = 0.0
+            }
+
+            document.querySelector("#gpa").value = shows;
+        });
+    </script>
+
+    <!-- modal for delete button -->
+    <div id="id01" class="modal">
+        <span onclick="document.getElementById('id01').style.display='none'" class="close" title="Close Modal">×</span>
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <form action="/modal" method="post">
+                    <div class="modal-header">
+                        <div class="modal-title">
+                            <h1>Delete Subject</h1>
+                        </div>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to delete the subject?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="clearfix">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal"
+                                onclick="document.getElementById('id01').style.display='none'"
+                                class="cancelbtn">Cancel</button>
+                            <button type="submit" name="delete_id" value={{ subject.id }} type="button"
+                                class="btn btn-primary" onclick="document.getElementById('id01').style.display='none'"
+                                class="deletebtn">Delete</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endfor %}
+
+</table>
+</div>
+
+
+
 {% endblock %}

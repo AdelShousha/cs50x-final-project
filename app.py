@@ -24,11 +24,7 @@ app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
 # Configure CS50 Library to use SQLite database
-db = SQL("sqlite:///finance.db")
-
-# Make sure API key is set
-if not os.environ.get("API_KEY"):
-    raise RuntimeError("API_KEY not set")
+db = SQL("sqlite:///gpa.db")
 
 
 @app.after_request
@@ -44,105 +40,126 @@ def after_request(response):
 @login_required
 def index():
     # select unique list of dicts of all symbols and names
-    stocks = db.execute(
-        "SELECT stock_symbol, stock_name FROM purchase WHERE users_id = ? GROUP BY stock_symbol", session["user_id"])
-    # print(stocks)
-    #[{'stock_symbol': 'G', 'stock_name': 'Genpact Ltd'}, {'stock_symbol': 'NFLX', 'stock_name': 'Netflix Inc.'}]
-
-    for stock in stocks:
-        # select the total number of shares of each stock
-
-        # get buy and sell shares
-        buy_shares = db.execute("SELECT SUM(shares) FROM purchase WHERE (users_id = ?) AND (action = ?) AND (stock_symbol = ?)",
-                                session["user_id"], "buy", stock["stock_symbol"])
-        sell_shares = db.execute("SELECT SUM(shares) FROM purchase WHERE (users_id = ?) AND (action = ?) AND (stock_symbol = ?)",
-                                 session["user_id"], "sell", stock["stock_symbol"])
-
-        # if share has no buy or has no sell make it = 0
-        if sell_shares[0]["SUM(shares)"] == None:
-            sell_shares[0]["SUM(shares)"] = 0
-        if buy_shares[0]["SUM(shares)"] == None:
-            buy_shares[0]["SUM(shares)"] = 0
-
-        # find total share of stock
-        total_shares = buy_shares[0]["SUM(shares)"] - sell_shares[0]["SUM(shares)"]
-
-        # add share to stock's dict
-        stock["share"] = total_shares
-
-        # add current share price and total share price to stock's dict
-        test = lookup(stock["stock_symbol"])
-        stock["current_price"] = test["price"]
-        stock["total_price"] = round(test["price"] * total_shares, 2)
-        # print(stock)
-        # without round : {'stock_symbol': 'NFLX', 'stock_name': 'Netflix Inc.', 'SUM(shares)': 6, 'current_price': 176.56, 'total_price': 1059.3600000000001}
-        # with round : {'stock_symbol': 'NFLX', 'stock_name': 'Netflix Inc.', 'SUM(shares)': 6, 'current_price': 176.56, 'total_price': 1059.36}
-
-    # remove any stock if it has 0 shares
-    stocks = [stock for stock in stocks if not (stock["share"] == 0)]
-
-    # get user's cash
-    user_cash = db.execute("SELECT cash FROM users WHERE id = ?", session["user_id"])
-
-    # find the total cash that the user has
-    stocks_total = 0
-    for stock in stocks:
-        stocks_total = stocks_total + stock["total_price"]
+    subjects = db.execute(
+        "SELECT id, name, hours, percent, gpa FROM subject WHERE users_id = ? ", session["user_id"])    
+    total_hours = db.execute(
+        "SELECT SUM(hours) FROM subject WHERE users_id = ?", session["user_id"])
+    if total_hours[0]["SUM(hours)"] == None:
+        total_hours[0]["SUM(hours)"] = 1000
+       
+    for subject in subjects:
+        if int(subject["percent"]) >= 97:
+            subject["grade"] = "A+"
+        elif int(subject["percent"]) >= 93:
+            subject["grade"] = "A"    
+        elif int(subject["percent"]) >= 89:
+            subject["grade"] = "A-"
+        elif int(subject["percent"]) >= 84:
+            subject["grade"] = "B+"
+        elif int(subject["percent"]) >= 80:
+            subject["grade"] = "B"
+        elif int(subject["percent"]) >= 76:
+            subject["grade"] = "B-"
+        elif int(subject["percent"]) >= 73:
+            subject["grade"] = "C+"
+        elif int(subject["percent"]) >= 70:
+            subject["grade"] = "C"
+        elif int(subject["percent"]) >= 67:
+            subject["grade"] = "C-"
+        elif int(subject["percent"]) >= 64:
+            subject["grade"] = "D+"
+        elif int(subject["percent"]) >= 60:
+            subject["grade"] = "D"
+        else:
+            subject["grade"] = "F"    
+    total_gpa = 0
+    for subject in subjects:
+        total_gpa = total_gpa + float(subject["gpa"]) * float(subject["hours"])
+    
+    total_percent = 0
+    for subject in subjects:
+        total_percent = total_percent + float(subject["percent"]) * float(subject["hours"])
 
     # passing the stocks and user cash and total user cash to be displayed
-    return render_template("index.html", stocks=stocks, user_cash=user_cash[0]["cash"], grand_total=stocks_total + user_cash[0]["cash"])
+    return render_template("index.html", subjects=subjects, total_hours=total_hours[0]["SUM(hours)"], total_gpa=round(total_gpa/int(total_hours[0]["SUM(hours)"]), 2),
+    total_percent=round(total_percent/int(total_hours[0]["SUM(hours)"]), 2))
 
-
-@app.route("/buy", methods=["GET", "POST"])
+@app.route("/modal", methods=["POST"])
 @login_required
-def buy():
-    if request.method == "GET":
-        return render_template("buy.html")
-    else:
-        # get the input of the user
-        symbol = request.form.get("symbol")
-        shares = request.form.get("shares")
+def modal():
+    
 
-        # date and time
-        time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-        # get user's cash
-        user_cash = db.execute("SELECT cash FROM users WHERE id = ?", session["user_id"])
-        # username = db.execute("SELECT username FROM users WHERE id = ?", session["user_id"])#[0]["id"])
-
-        # use lookup to get the stock that the user typed it's symbol
-        stock = lookup(symbol)
+    edit_id = request.form.get("edit_id")
+    if edit_id:
+        name = request.form.get("name")
+        hours = request.form.get("hours")
+        percent = request.form.get("percent")
+        gpa = request.form.get("gpa")
 
         # check if the symbol is valid
-        if not stock:
-            return apology("must enter symbol")
+        errors = [{"variable": name, "error": "must type a subject name"},
+                    {"variable": hours, "error": "must type the credit hours"},
+                    {"variable": percent, "error": "must type the percentage"},
+                    {"variable": gpa, "error": "must type the gpa"}]
+        # looping over all the dicts making sure that the user entered all the required info
+        for error in errors:
+            if not error["variable"]:
+                return apology(error["error"])
+
         # check if the number is fraction or less than 0
-        if not shares.isdigit():
-            return apology("invalid shares")
-        if int(shares) < 0:
-            return apology("invalid shares")
+        if not hours.isdigit() or not percent.isdigit():
+            return apology("invalid hours or percentage")
+        if int(hours) < 0 or int(percent) < 1 or float(gpa) < 0 :
+            return apology("numbers must be positive")
+        if int(hours) > 6 or int(percent) > 100 or float(gpa) > 4 :
+            return apology("out of range")
+        db.execute("UPDATE subject SET name = ?, hours = ?, percent = ?, gpa = ? WHERE id = ?", name, hours, percent, gpa, edit_id)
 
-        # check if the user cash is larger than the stock(s) price
-        if user_cash[0]["cash"] >= (stock["price"] * int(shares)):
-            # insert the new stock in data base action 'buy'
-            db.execute("INSERT INTO purchase (stock_name, stock_symbol, stock_price, shares, users_id, time, action) VALUES(?, ?, ?, ?, ?, ?, ?)",
-                       stock["name"], stock["symbol"], stock["price"], int(shares), session["user_id"], time, "buy")
-            # update user cash
-            new_cash = user_cash[0]["cash"] - (stock["price"] * int(shares))
-            db.execute("UPDATE users SET cash = ? WHERE id = ?", new_cash, session["user_id"])
-        else:
-            return apology("can't afford")
-
+    
+    delete_id = request.form.get("delete_id")
+    if delete_id:
+        db.execute("DELETE FROM subject WHERE id = ? ", delete_id)
+    
+    
     return redirect("/")
+    # return render_template("modal.html")
 
 
-@app.route("/history")
+@app.route("/add", methods=["GET", "POST"])
 @login_required
-def history():
-    history_logs = db.execute("SELECT stock_symbol, stock_price, shares, time, action FROM purchase")
-    # print(history_logs)
-    # [{'stock_symbol': 'NFLX', 'stock_price': 176.56, 'shares': 2, 'time': '2022-07-14 10:58:12', 'action': 'buy'}]
-    return render_template("history.html", logs=history_logs)
+def add():
+    if request.method == "GET":
+        return render_template("add.html")
+    else:
+        # get the input of the user
+        name = request.form.get("name")
+        hours = request.form.get("hours")
+        percent = request.form.get("percent")
+        gpa = request.form.get("gpa")
+
+        # check if the symbol is valid
+        errors = [{"variable": name, "error": "must type a subject name"},
+                  {"variable": hours, "error": "must type the credit hours"},
+                  {"variable": percent, "error": "must type the percentage"},
+                  {"variable": gpa, "error": "must type the gpa"}]
+        # looping over all the dicts making sure that the user entered all the required info
+        for error in errors:
+            if not error["variable"]:
+                return apology(error["error"])
+
+        # check if the number is fraction or less than 0
+        if not hours.isdigit() or not percent.isdigit():
+            return apology("invalid hours or percentage")
+        if int(hours) < 0 or int(percent) < 1 or float(gpa) < 0 :
+            return apology("numbers must be positive")
+        if int(hours) > 6 or int(percent) > 100 or float(gpa) > 4 :
+            return apology("out of range")
+        
+            # insert the new stock in data base action 'buy'
+        db.execute("INSERT INTO subject (name, hours, percent, gpa, users_id) VALUES(?, ?, ?, ?, ?)", name, hours, percent, gpa, session["user_id"])
+            
+
+    return redirect("/add")
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -192,28 +209,6 @@ def logout():
     return redirect("/")
 
 
-@app.route("/quote", methods=["GET", "POST"])
-@login_required
-def quote():
-    # when accessing the page via GET, render the quote page to enter symbol
-    if request.method == "GET":
-        return render_template("quote.html")
-    else:  # accessing via POST
-
-        # getting what symbol did the user input
-        symbol = request.form.get("symbol")
-
-        # using the lookup func. to lookup the name, price and symbol and putting them in a dict
-        result = lookup(symbol)
-
-        # user typed a symbol that does not exist
-        if not result:
-            return apology("invalid symbol")
-        # passing the name, price and symbol to quoted.html to show them
-        else:
-            return render_template("quoted.html", name=result["name"], price=usd(result["price"]), symbol=result["symbol"])
-
-
 @app.route("/register", methods=["GET", "POST"])
 def register():
     # when accessing the page via GET, render the register page
@@ -240,10 +235,10 @@ def register():
 
         # PERSONAL TOUCH: Require users’ passwords to have some number of letters, numbers, and/or symbols.
         # Minimum eight characters, at least one letter, one number and one special character:
-        regex = "^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$"
+        regex = "^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$"
         result = re.match(regex, password)
         if not result:
-            return apology("password must be 8 characters and have a letters, a number and a special character")
+            return apology("Minimum 8 characters and at least one letter and one number")
 
         # making sure that the password and the confirmation are the same
         if password != confirmation:
@@ -264,73 +259,4 @@ def register():
     return redirect("/")
 
 
-@app.route("/sell", methods=["GET", "POST"])
-@login_required
-def sell():
-    stocks = db.execute(
-        "SELECT stock_symbol, stock_name FROM purchase WHERE users_id = ? GROUP BY stock_symbol", session["user_id"])
-    # print(stocks)
-    #[{'stock_symbol': 'G', 'stock_name': 'Genpact Ltd'}, {'stock_symbol': 'NFLX', 'stock_name': 'Netflix Inc.'}]
 
-    # select the total number of shares of each stock
-    for stock in stocks:
-        buy_shares = db.execute("SELECT SUM(shares) FROM purchase WHERE (users_id = ?) AND (action = ?) AND (stock_symbol = ?)",
-                                session["user_id"], "buy", stock["stock_symbol"])
-        sell_shares = db.execute("SELECT SUM(shares) FROM purchase WHERE (users_id = ?) AND (action = ?) AND (stock_symbol = ?)",
-                                 session["user_id"], "sell", stock["stock_symbol"])
-
-        if sell_shares[0]["SUM(shares)"] == None:
-            sell_shares[0]["SUM(shares)"] = 0
-        if buy_shares[0]["SUM(shares)"] == None:
-            buy_shares[0]["SUM(shares)"] = 0
-
-        total_shares = buy_shares[0]["SUM(shares)"] - sell_shares[0]["SUM(shares)"]
-
-        # add share in stocks list of dicts
-        stock["share"] = total_shares
-
-     # remove any stock if it has 0 shares
-    stocks = [stock for stock in stocks if not (stock["share"] == 0)]
-
-    exist_symbols = [sub['stock_symbol'] for sub in stocks]
-    # print(exist_symbols)
-    #['G', 'NFLX']
-
-    if request.method == "GET":
-        return render_template("sell.html", symbols=exist_symbols)
-    else:
-        # get time, symbol, shares, user cash and stock
-        time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        symbol = request.form.get("symbol")
-        shares = request.form.get("shares")
-        user_cash = db.execute("SELECT cash FROM users WHERE id = ?", session["user_id"])
-        stock = lookup(symbol)
-
-        # select the total number of shares of current stock
-        buy_shares = db.execute(
-            "SELECT SUM(shares) FROM purchase WHERE (users_id = ?) AND (action = ?) AND (stock_symbol = ?)", session["user_id"], "buy", symbol)
-        sell_shares = db.execute(
-            "SELECT SUM(shares) FROM purchase WHERE (users_id = ?) AND (action = ?) AND (stock_symbol = ?)", session["user_id"], "sell", symbol)
-
-        if sell_shares[0]["SUM(shares)"] == None:
-            sell_shares[0]["SUM(shares)"] = 0
-        if buy_shares[0]["SUM(shares)"] == None:
-            buy_shares[0]["SUM(shares)"] = 0
-
-        total_shares = buy_shares[0]["SUM(shares)"] - sell_shares[0]["SUM(shares)"]
-
-        # check errors
-        if (not symbol) or (symbol not in exist_symbols):
-            return apology("missing symbol")
-        if int(shares) > total_shares:
-            return apology("too many shares")
-
-        # insert the new stock in data base action 'sell'
-        db.execute("INSERT INTO purchase (stock_name, stock_symbol, stock_price, shares, users_id, time, action) VALUES(?, ?, ?, ?, ?, ?, ?)",
-                   stock["name"], stock["symbol"], stock["price"], int(shares), session["user_id"], time, "sell")
-
-        # update user cash
-        new_cash = user_cash[0]["cash"] + (stock["price"] * int(shares))
-        db.execute("UPDATE users SET cash = ? WHERE id = ?", new_cash, session["user_id"])
-
-    return redirect("/")
