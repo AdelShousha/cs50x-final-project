@@ -11,9 +11,14 @@
             <input autocomplete="off" autofocus class="form-control mx-auto w-auto"  name="hours" placeholder="Credit Hours" type="number" min="1" max="6">
             <input autocomplete="off" autofocus class="form-control mx-auto w-auto" id="percent" name="percent" placeholder="Score" type="number" min="1" max="100">
             <input autocomplete="off" autofocus class="form-control mx-auto w-auto" readonly id="gpa" name="gpa" placeholder="gpa" type="number" step="0.01" min="0" max="4" >
-            <button class="btn btn-primary" type="submit">Add</button>
+            <button class="btn btn-success" type="submit">Add</button>
         </div>
+        
     </form>
+    <div class="mb-3">
+        <a href='/'>
+            <button class="btn btn-success" type="submit">Finish</button>
+        </a>
     <script>
         let input = document.querySelector('#percent');
         input.addEventListener('input', async function() {
@@ -58,10 +63,7 @@
             document.querySelector("#gpa").value = shows;
         });
     </script>
-    <div class="mb-3">
-        <a href='/'>
-            <button class="btn btn-primary" type="submit">Finish</button>
-        </a>
+    
       
      
 {% endblock %}

@@ -13,9 +13,9 @@ nav .navbar-brand .darkorchid
 {
     color: #9932CC;
 }
-nav .navbar-brand .yellow
+nav .navbar-brand .orange
 {
-    color: #f5b82e;
+    color: #FD9308;
 }
 nav .navbar-brand .green
 {
@@ -47,11 +47,6 @@ nav .navbar-brand .green
     transition: 0.5s;
 }
 
-.btn-danger {
-    color: #fff;
-    background-color: #d83b1f;
-    border-color: #dc3545;
-}
 
 .btn-info {
     color: #000;
@@ -107,6 +102,7 @@ button:hover {
 .container {
   padding: 16px;
   text-align: center;
+  height: 90%;
 }
 
 /* The Modal (background) */
@@ -170,3 +166,54 @@ hr {
 .modal-body{
     font-size: 20px;
 }
+/* iframe{ */
+    /* width: 100%; */
+    /* height: 300px; */
+/* } */
+
+.btn-success{
+    color: #fff;
+    background-color: #9400D3;
+    border-color: 	indigo;
+}
+.btn-success:hover {
+    color: #fff;
+    background-color: indigo;
+    border-color: indigo;
+}
+
+.btn-danger{
+  color: #fff;
+  background-color: #FD9308;
+  border-color: 	#FD9308;
+}
+.btn-danger:hover {
+  color: #fff;
+  background-color: #ca7103;
+  border-color: #ca7103;
+}
+
+.form-control:focus { 
+  outline: none !important;
+  border-color: #FD9308;
+  box-shadow: 0 0 10px #FD9308;
+}
+
+a {
+  color: #9400D3;
+  background-color: transparent;
+  text-decoration: none;
+}
+
+.roll:hover {
+  color: #FD9308;
+  background-color: transparent;
+  text-decoration: underline;
+}
+.roll:active {
+  color: #ca7103;
+  background-color: transparent;
+  text-decoration: underline;
+}
+
+

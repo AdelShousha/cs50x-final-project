@@ -1,5 +1,4 @@
 import os
-
 import re
 from cs50 import SQL
 from flask import Flask, flash, redirect, render_template, request, session
@@ -7,16 +6,13 @@ from flask_session import Session
 from tempfile import mkdtemp
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime
-from helpers import apology, login_required, lookup, usd
+from helpers import apology, login_required
 
 # Configure application
 app = Flask(__name__)
 
 # Ensure templates are auto-reloaded
 app.config["TEMPLATES_AUTO_RELOAD"] = True
-
-# Custom filter
-app.jinja_env.filters["usd"] = usd
 
 # Configure session to use filesystem (instead of signed cookies)
 app.config["SESSION_PERMANENT"] = False
@@ -39,14 +35,14 @@ def after_request(response):
 @app.route("/")
 @login_required
 def index():
-    # select unique list of dicts of all symbols and names
+    # select all the data from the subject table
     subjects = db.execute(
         "SELECT id, name, hours, percent, gpa FROM subject WHERE users_id = ? ", session["user_id"])    
     total_hours = db.execute(
         "SELECT SUM(hours) FROM subject WHERE users_id = ?", session["user_id"])
     if total_hours[0]["SUM(hours)"] == None:
         total_hours[0]["SUM(hours)"] = 1000
-       
+    # automatically assigning the grade to the subject depending on the score
     for subject in subjects:
         if int(subject["percent"]) >= 97:
             subject["grade"] = "A+"
@@ -72,15 +68,16 @@ def index():
             subject["grade"] = "D"
         else:
             subject["grade"] = "F"    
+    # calculating the total gpa
     total_gpa = 0
     for subject in subjects:
         total_gpa = total_gpa + float(subject["gpa"]) * float(subject["hours"])
     
+    # calculating the total gpa
     total_percent = 0
     for subject in subjects:
         total_percent = total_percent + float(subject["percent"]) * float(subject["hours"])
 
-    # passing the stocks and user cash and total user cash to be displayed
     return render_template("index.html", subjects=subjects, total_hours=total_hours[0]["SUM(hours)"], total_gpa=round(total_gpa/int(total_hours[0]["SUM(hours)"]), 2),
     total_percent=round(total_percent/int(total_hours[0]["SUM(hours)"]), 2))
 
@@ -88,7 +85,7 @@ def index():
 @login_required
 def modal():
     
-
+    # if the add button is clicked passing the content of the form to the database 
     edit_id = request.form.get("edit_id")
     if edit_id:
         name = request.form.get("name")
@@ -96,7 +93,7 @@ def modal():
         percent = request.form.get("percent")
         gpa = request.form.get("gpa")
 
-        # check if the symbol is valid
+        # check if the input is valid
         errors = [{"variable": name, "error": "must type a subject name"},
                     {"variable": hours, "error": "must type the credit hours"},
                     {"variable": percent, "error": "must type the percentage"},
@@ -113,16 +110,15 @@ def modal():
             return apology("numbers must be positive")
         if int(hours) > 6 or int(percent) > 100 or float(gpa) > 4 :
             return apology("out of range")
+        # update the database
         db.execute("UPDATE subject SET name = ?, hours = ?, percent = ?, gpa = ? WHERE id = ?", name, hours, percent, gpa, edit_id)
 
-    
+    # if the delete button is clicked delete the subject from the database
     delete_id = request.form.get("delete_id")
     if delete_id:
         db.execute("DELETE FROM subject WHERE id = ? ", delete_id)
     
-    
     return redirect("/")
-    # return render_template("modal.html")
 
 
 @app.route("/add", methods=["GET", "POST"])
@@ -137,7 +133,7 @@ def add():
         percent = request.form.get("percent")
         gpa = request.form.get("gpa")
 
-        # check if the symbol is valid
+        # check if the input is valid
         errors = [{"variable": name, "error": "must type a subject name"},
                   {"variable": hours, "error": "must type the credit hours"},
                   {"variable": percent, "error": "must type the percentage"},
@@ -155,7 +151,7 @@ def add():
         if int(hours) > 6 or int(percent) > 100 or float(gpa) > 4 :
             return apology("out of range")
         
-            # insert the new stock in data base action 'buy'
+            # insert the new subject in the database
         db.execute("INSERT INTO subject (name, hours, percent, gpa, users_id) VALUES(?, ?, ?, ?, ?)", name, hours, percent, gpa, session["user_id"])
             
 
@@ -233,8 +229,7 @@ def register():
             if not error["variable"]:
                 return apology(error["error"])
 
-        # PERSONAL TOUCH: Require users’ passwords to have some number of letters, numbers, and/or symbols.
-        # Minimum eight characters, at least one letter, one number and one special character:
+        # regex to make the password at least 8 char and has one letter
         regex = "^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$"
         result = re.match(regex, password)
         if not result:
@@ -258,5 +253,7 @@ def register():
         session["user_id"] = rows[0]["id"]
     return redirect("/")
 
-
-
+@app.route("/about")
+@login_required
+def about():
+    return render_template("about.html")
