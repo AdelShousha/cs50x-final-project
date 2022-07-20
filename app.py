@@ -20,7 +20,10 @@ app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
 # Configure CS50 Library to use SQLite database
-db = SQL("sqlite:///gpa.db")
+uri = os.getenv("DATABASE_URL")
+if uri.startswith("postgres://"):
+    uri = uri.replace("postgres://", "postgresql://")
+db = SQL(postgres://zsrodnehaxbeqh:10a8e7652844120da38126fe443744c2af0ea58c855e86a71802024c4c251965@ec2-52-204-157-26.compute-1.amazonaws.com:5432/da1nr92hbbh934)
 
 
 @app.after_request
